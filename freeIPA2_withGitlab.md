@@ -193,8 +193,8 @@ networks:
 
 Then launch it with `docker-compose up -d`. Gitlab will take some time to create all files.
 
-**FreeIPA is available at: ipa.mcfaden.local**
-**Gitlab is available at: gitlab.mcfaden.local**
+FreeIPA is available at: **ipa.mcfaden.local**
+Gitlab is available at: **gitlab.mcfaden.local**
 
 Finally, at least the admin user needs to be added in the docker container:
 ```
