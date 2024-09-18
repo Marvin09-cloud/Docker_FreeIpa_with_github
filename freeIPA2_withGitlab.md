@@ -114,7 +114,7 @@ http {
 ```
 
 ## Docker compose:
-**NB:** create your nginx.conf file before launch your docker-compose.yml
+**NB:** create your nginx.conf file before launching your docker-compose.yml
 ```
 services:
   freeipa_server:
