@@ -156,8 +156,29 @@ services:
     hostname: 'localhost'
     container_name: gitlab-ee
     environment:
-      GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://gitlab.mcfaden.local'
+        GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.mc.faden.local'
+        gitlab_rails['ldap_enabled'] = true
+        gitlab_rails['ldap_servers'] = YAML.load <<-EOS
+          main:
+            label: 'LDAP'
+            host: 'ipa.mcfaden.local' # Adresse IP du serveur FreeIPA
+            port: 389
+            uid: 'uid'
+            bind_dn: 'uid=admin,cn=users,cn=accounts,dc=mcfaden,dc=local'
+            password: File.read('/run/secrets/gitlab_ldap_password').strip
+            encryption: 'plain'
+            verify_certificates: false
+            smartcard_auth: false
+            active_directory: false
+            allow_username_or_email_login: false
+            lowercase_usernames: false
+            block_auto_created_users: false
+            base: 'cn=users,cn=accounts,dc=mcfaden,dc=local'
+            group_base: 'cn=groups,cn=accounts,dc=mcfaden,dc=local'
+            admin_group: 'admins'
+            sync_ssh_keys: true
+        EOS
     ports:
       - '8080:80'
       - '8443:443'
