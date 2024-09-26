@@ -122,7 +122,7 @@ services:
     container_name: freeipa-srv
     hostname: ipa.mcfaden.local
     environment:
-     PASSWORD_FILE: /run/secrets/freeipa_password
+      PASSWORD_FILE: /run/secrets/freeipa_password
     volumes:
       - ./ipa-data:/data:Z
     command: ipa-server-install -U -r MCFADEN.LOCAL --no-ntp
@@ -148,18 +148,19 @@ services:
       - "80:80" # Exposing port 80 to the host
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro # Mount the nginx config file
+     #- ./mattermost/certs:/etc/nginx/certs:ro 
     networks:
       docker_net:
         ipv4_address: 192.168.1.10
-        
+
   web:
     image: gitlab/gitlab-ee:latest
     restart: always
     hostname: 'localhost'
     container_name: gitlab-ee
     environment:
-        GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://gitlab.mc.faden.local'
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab.mcfaden.local'
         gitlab_rails['ldap_enabled'] = true
         gitlab_rails['ldap_servers'] = YAML.load <<-EOS
           main:
@@ -193,7 +194,7 @@ services:
       docker_net:
           ipv4_address: 192.168.1.12
     secrets:
-      - gitlab_ldap_password
+         - gitlab_ldap_password
 
   gitlab-runner:
     image: gitlab/gitlab-runner:alpine
@@ -208,12 +209,67 @@ services:
       docker_net:
           ipv4_address: 192.168.1.13
 
+  mattermost:
+    image: mattermost/mattermost-team-edition
+    container_name: mattermost
+    environment:
+      - MM_SERVICESETTINGS_SITEURL=http://mattermost.mcfaden.local
+      - MM_SQLSETTINGS_DRIVERNAME=postgres
+      - MM_SQLSETTINGS_DATASOURCE=postgres://mmuser:password@postgres:5432/mattermost?sslmode=disable&connect_timeout=10
+      - MM_LDAPSETTINGS_ENABLE=true
+      - MM_LDAPSETTINGS_LDAPSERVER=ipa.mcfaden.local
+      - MM_LDAPSETTINGS_LDAPPORT=389
+      - MM_LDAPSETTINGS_BASEDN=dc=mcfaden,dc=local
+      - MM_LDAPSETTINGS_BINDUSERNAME=uid=admin,cn=users,cn=accounts,dc=mcfaden,dc=local
+      - MM_LDAPSETTINGS_BINDPASSWORD_FILE=File.read('mattermost_ldap_password').strip
+      - MM_LDAPSETTINGS_FILTER="(objectClass=posixAccount)"
+      - MM_LDAPSETTINGS_GROUPFILTER="(objectClass=groupOfNames)"
+      - MM_LDAPSETTINGS_EMAILATTRIBUTE=mail
+      - MM_LDAPSETTINGS_USERNAMEATTRIBUTE=uid
+      - MM_LDAPSETTINGS_IDATTRIBUTE=uid
+      - MM_LDAPSETTINGS_LOGINIDATTRIBUTE=uid
+     #- MM_SERVICESETTINGS_TLSCERTFILE=/mattermost/certs/mattermost.crt  # Certificat
+     #- MM_SERVICESETTINGS_TLSKEYFILE=/mattermost/certs/mattermost.key   # Clé privée
+    ports:
+      - "8065:8065"
+    networks:
+      docker_net:
+        ipv4_address: 192.168.1.14
+    depends_on:
+      - postgres
+ 
+    volumes:
+      - ./mattermost/config:/mattermost/config:rw
+      - ./mattermost/data:/mattermost/data:rw
+      - ./mattermost/logs:/mattermost/logs:rw
+      - ./mattermost/plugins:/mattermost/plugins:rw
+      - ./mattermost/client-plugins:/mattermost/client-plugins:rw
+     #- ./mattermost/certs:/mattermost/certs:ro
+      - /tmp:/tmp:rw
+    secrets:
+       - mattermost_ldap_password
+
+  postgres:
+    image: postgres:13-alpine
+    #env_file
+    container_name: postgres
+    environment:
+      POSTGRES_DB: mattermost
+      POSTGRES_USER: mmuser
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+    networks:
+      docker_net:
+        ipv4_address: 192.168.1.15
 
 secrets:
   freeipa_password:
     file: ./secrets/freeipa_password
   gitlab_ldap_password:
     file: ./secrets/gitlab_ldap_password
+  mattermost_ldap_password:
+    file: ./secrets/mattermost_ldap_password
 
 networks:
   docker_net:
