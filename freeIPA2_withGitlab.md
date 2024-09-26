@@ -76,6 +76,10 @@ sudo chown -R 102000:102000 mattermost
 Because, when you're doing your mattermost docker, you must put 2000 permission on your volumes mounted. So, when you do your remapping for this context, you must put 102000 instead of 2000
 (100000 permission = 0 so put 2000 => 102000)
 
+## Secret
+
+For security reasons, you must create in your root folder, a file containing your FreeIpa password.
+
 ## Hosts
 
 Add on `/etc/hosts` of your computer:
