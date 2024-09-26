@@ -122,7 +122,7 @@ services:
     container_name: freeipa-srv
     hostname: ipa.mcfaden.local
     environment:
-      PASSWORD: Frodo123
+     PASSWORD_FILE: /run/secrets/freeipa_password
     volumes:
       - ./ipa-data:/data:Z
     command: ipa-server-install -U -r MCFADEN.LOCAL --no-ntp
@@ -138,6 +138,8 @@ services:
     networks:
       docker_net:
         ipv4_address: 192.168.1.11
+    secrets:
+      - freeipa_password
 
   nginx-proxy:
     image: nginx:latest
@@ -190,6 +192,9 @@ services:
     networks:
       docker_net:
           ipv4_address: 192.168.1.12
+    secrets:
+      - gitlab_ldap_password
+
   gitlab-runner:
     image: gitlab/gitlab-runner:alpine
     container_name: gitlab-runner    
@@ -203,6 +208,12 @@ services:
       docker_net:
           ipv4_address: 192.168.1.13
 
+
+secrets:
+  freeipa_password:
+    file: ./secrets/freeipa_password
+  gitlab_ldap_password:
+    file: ./secrets/gitlab_ldap_password
 
 networks:
   docker_net:
