@@ -66,6 +66,15 @@ Next, it will need to start restoring the copied data to the `srv/gitlab/data/ba
 ```
 gitlab-backup restore BACKUP= backup_file_name
 ```
+## Mattermost
+
+Change ownership to correct uid:
+
+```         
+sudo chown -R 102000:102000 mattermost
+```
+Because, when you're doing your mattermost docker, you must put 2000 permission on your volumes mounted. So, when you do your remapping for this context, you must put 102000 instead of 2000
+(100000 permission = 0 so put 2000 => 102000)
 
 ## Hosts
 
@@ -74,6 +83,7 @@ Add on `/etc/hosts` of your computer:
 ```
 192.168.1.11 ipa.mcfaden.local
 192.168.1.12 gitlab.mcfaden.local
+192.168.1.14 mattermost.mcfaden.local
 ```
 
 ## Nginx
@@ -104,6 +114,19 @@ http {
 
         location / {
             proxy_pass http://192.168.1.12:80; # Proxy to app1's IP
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+    
+     server {
+        listen 80;
+        server_name mattermost.mcfaden.local;
+
+        location / {
+            proxy_pass http://192.168.1.14:8065; # IP et port de Mattermost
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
