@@ -44,7 +44,7 @@ This will create a backup file in the `/var/opt/gitlab/backups/` directory of th
 
 To do this, use the scp command :
 ```
-scp -r root@VMgitlab: /var/opt/gitlab/backups/file_gitlab_backup.tar /home/user/backup/filename_choose_gitlab_backup.tar
+scp -r root@VMgitlab: /var/opt/gitlab/backups/file_gitlab_backup.tar /home/user/backup/filename_chosen_gitlab_backup.tar
 ```
  This command transfers a copy of the backup created in step 1 to the backup directory of the gitlab container host.
 
@@ -72,8 +72,8 @@ gitlab-backup restore BACKUP= backup_file_name
 Add on `/etc/hosts` of your computer:
 
 ```
-192.168.1.11 ipa.mcfaden.local
-192.168.1.12 gitlab.mcfaden.local
+192.168.1.11 ipa.example.local
+192.168.1.12 gitlab.example.local
 ```
 
 ## Nginx
@@ -88,7 +88,7 @@ events {
 http {
     server {
         listen 80;
-        server_name ipa.mcfaden.local;
+        server_name ipa.example.local;
 
         location / {
             proxy_pass http://192.168.1.10:80; # Proxy to app1's IP
@@ -100,7 +100,7 @@ http {
     }
     server {
         listen 80;
-        server_name gitlab.mcfaden.local;
+        server_name gitlab.example.local;
 
         location / {
             proxy_pass http://192.168.1.12:80; # Proxy to app1's IP
@@ -120,12 +120,12 @@ services:
   freeipa_server:
     image: freeipa/freeipa-server:almalinux-9
     container_name: freeipa-srv
-    hostname: ipa.mcfaden.local
+    hostname: ipa.example.local
     environment:
-      PASSWORD: Frodo123
+      PASSWORD: mypassword
     volumes:
       - ./ipa-data:/data:Z
-    command: ipa-server-install -U -r MCFADEN.LOCAL --no-ntp
+    command: ipa-server-install -U -r EXAMPLE.LOCAL --no-ntp
     stdin_open: true
     tty: true
     expose:
@@ -157,7 +157,7 @@ services:
     container_name: gitlab-ee
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://gitlab.mcfaden.local'
+        external_url 'http://gitlab.example.local'
     ports:
       - '8080:80'
       - '8443:443'
@@ -193,9 +193,9 @@ networks:
 
 Then launch it with `docker-compose up -d`. Gitlab will take some time to create all files.
 
-FreeIPA is available at: **ipa.mcfaden.local**
+FreeIPA is available at: **ipa.example.local**
 
-Gitlab is available at: **gitlab.mcfaden.local**
+Gitlab is available at: **gitlab.example.local**
 
 Finally, at least the admin user needs to be added in the docker container:
 ```
@@ -205,6 +205,6 @@ Then use this command to add an admin:
 ```
 kinit admin
 ```
-Using password `Frodo123`
+Using password `mypassword`
 
 
